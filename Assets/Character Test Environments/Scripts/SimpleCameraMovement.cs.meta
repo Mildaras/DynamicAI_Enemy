@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 40683cdddc87268fb91f54b8243e2f52
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 136364
+  packageName: Character Test Environments
+  packageVersion: 1.0
+  assetPath: Assets/Character Test Environments/Scripts/SimpleCameraMovement.cs
+  uploadId: 287924
