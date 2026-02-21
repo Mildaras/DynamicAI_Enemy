@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8259f01903545eadca24b06e63daacb0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 136364
+  packageName: Character Test Environments
+  packageVersion: 1.0
+  assetPath: Assets/Character Test Environments/Scene 1/Materials/PurpleBox.mat
+  uploadId: 287924

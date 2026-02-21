@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 3ed0bea12d2d990718aa1ed372169b32
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 136364
+  packageName: Character Test Environments
+  packageVersion: 1.0
+  assetPath: Assets/Character Test Environments/Scene 1/Scripts/BoxMovement.cs
+  uploadId: 287924
