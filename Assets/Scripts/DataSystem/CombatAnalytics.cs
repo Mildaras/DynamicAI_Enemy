@@ -142,12 +142,14 @@ public class CombatAnalytics : MonoBehaviour
         LogConsoleSummary(_summary);
         AppendSummaryToFile(_summary);
 
-        // 10) Clear logs after successful learning
-        if (ActionLogger.Instance != null && ActionLogger.Instance.clearLogsAfterLearning)
+        // 10) Save to current session
+        if (SessionManager.Instance != null)
         {
-            ActionLogger.Instance.ClearAllLogs();
-            AdaptiveLogger.Important("Cleared action logs - ready for next session.\n");
+            SessionManager.Instance.SaveCombatSummary(_summary);
+            SessionManager.Instance.SaveWeightChanges(GenerateChangeReport(originalWeights, weights));
         }
+
+        // 11) Clear logs after successful learning (handled by SessionManager on quit)
     }
 
     private string FormatWeightsDetailed(EnemyWeightProfile w)

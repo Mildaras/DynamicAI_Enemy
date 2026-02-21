@@ -31,25 +31,58 @@ public class SummoningWeightAdapter : IWeightAdapter
 
         // Calculate effectiveness (ROI) for each minion type
         // Effectiveness = actual impact / expected impact based on spawn weight
-        // If effectiveness < 1, minion underperformed → increase weight
+        // If effectiveness < 1, minion underperformed → increase weight gradually
         // If effectiveness > 1, minion overperformed → decrease weight slightly
+        // If minions didn't spawn, skip adaptation (not enough data)
 
-        // Exploder adaptation
+        // Calculate effectiveness for all minion types
         float effExpl = CalculateEffectiveness(hitsExpl, dmgExpl, weights.SpawnExploder);
-        float targetExpl = weights.SpawnExploder * (1f + (1f - effExpl) * ADJUST_SCALE);
-        weights.SpawnExploder = Mathf.Lerp(weights.SpawnExploder, targetExpl, adaptationRate);
-
-        // Bouncer adaptation
         float effBoun = CalculateEffectiveness(hitsBoun, dmgBoun, weights.SpawnBouncer);
-        float targetBoun = weights.SpawnBouncer * (1f + (1f - effBoun) * ADJUST_SCALE);
-        weights.SpawnBouncer = Mathf.Lerp(weights.SpawnBouncer, targetBoun, adaptationRate);
-
-        // Tank adaptation
         float effTank = CalculateEffectiveness(hitsTank, dmgTank, weights.SpawnTank);
-        float targetTank = weights.SpawnTank * (1f + (1f - effTank) * ADJUST_SCALE);
-        weights.SpawnTank = Mathf.Lerp(weights.SpawnTank, targetTank, adaptationRate);
+
+        // Exploder adaptation (only if spawned)
+        if (summary.EnemySpawnExploder > 0)
+        {
+            float targetExpl = CalculateTargetWeight(weights.SpawnExploder, effExpl);
+            weights.SpawnExploder = Mathf.Lerp(weights.SpawnExploder, targetExpl, adaptationRate);
+        }
+
+        // Bouncer adaptation (only if spawned)
+        if (summary.EnemySpawnBouncer > 0)
+        {
+            float targetBoun = CalculateTargetWeight(weights.SpawnBouncer, effBoun);
+            weights.SpawnBouncer = Mathf.Lerp(weights.SpawnBouncer, targetBoun, adaptationRate);
+        }
+
+        // Tank adaptation (only if spawned)
+        if (summary.EnemySpawnTank > 0)
+        {
+            float targetTank = CalculateTargetWeight(weights.SpawnTank, effTank);
+            weights.SpawnTank = Mathf.Lerp(weights.SpawnTank, targetTank, adaptationRate);
+        }
 
         AdaptiveLogger.Verbose($"[Summoning] Expl:{weights.SpawnExploder:F1} (eff={effExpl:F2}), Boun:{weights.SpawnBouncer:F1} (eff={effBoun:F2}), Tank:{weights.SpawnTank:F1} (eff={effTank:F2})");
+    }
+
+    /// <summary>
+    /// Calculate target weight based on effectiveness.
+    /// Prevents explosive growth by capping increases.
+    /// </summary>
+    private float CalculateTargetWeight(float currentWeight, float effectiveness)
+    {
+        // If effective, reduce weight slightly
+        if (effectiveness >= 0.8f)
+        {
+            return currentWeight * 0.9f;
+        }
+        
+        // If ineffective, increase weight but with diminishing returns
+        // Max increase per adaptation: +50% or +20 points (whichever is smaller)
+        float increase = (1f - effectiveness) * ADJUST_SCALE;
+        float maxIncrease = Mathf.Min(currentWeight * 0.5f, 20f);
+        float actualIncrease = Mathf.Min(currentWeight * increase, maxIncrease);
+        
+        return currentWeight + actualIncrease;
     }
 
     /// <summary>
