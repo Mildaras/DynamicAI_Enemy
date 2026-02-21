@@ -23,7 +23,8 @@ public class BouncerAttackState : IState
     public void OnEnter()
     {
         HasHit = false;
-        _refs.agent.isStopped = false;
+        if (_refs.agent != null && _refs.agent.isOnNavMesh && _refs.agent.isActiveAndEnabled)
+            _refs.agent.isStopped = false;
 
         TryHit();
     }
@@ -69,13 +70,18 @@ public class BouncerAttackState : IState
 
         _lastHitTime = Time.time;
         HasHit       = true;
-        _refs.agent.isStopped = true;
+        if (_refs.agent != null && _refs.agent.isOnNavMesh && _refs.agent.isActiveAndEnabled)
+            _refs.agent.isStopped = true;
         
     }
 
     public void Tick() 
     { 
         if (HasHit) return;
+        
+        // Check if destroyed or not on NavMesh
+        if (_player == null || _refs == null || _refs.agent == null) return;
+        if (!_refs.agent.isOnNavMesh || !_refs.agent.isActiveAndEnabled) return;
 
         // keep chasing
         _refs.agent.SetDestination(_player.position);

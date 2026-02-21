@@ -43,15 +43,19 @@ public class SummoningWeightAdapter : IWeightAdapter
         // Exploder adaptation (only if spawned)
         if (summary.EnemySpawnExploder > 0)
         {
+            float beforeExpl = weights.SpawnExploder;
             float targetExpl = CalculateTargetWeight(weights.SpawnExploder, effExpl);
             weights.SpawnExploder = Mathf.Lerp(weights.SpawnExploder, targetExpl, adaptationRate);
+            AdaptiveLogger.Detailed($"[Summoning] Exploder: {beforeExpl:F2} → target={targetExpl:F2} → lerped={weights.SpawnExploder:F2} (spawned={summary.EnemySpawnExploder}, hits={hitsExpl}, eff={effExpl:F2})");
         }
 
         // Bouncer adaptation (only if spawned)
         if (summary.EnemySpawnBouncer > 0)
         {
+            float beforeBoun = weights.SpawnBouncer;
             float targetBoun = CalculateTargetWeight(weights.SpawnBouncer, effBoun);
             weights.SpawnBouncer = Mathf.Lerp(weights.SpawnBouncer, targetBoun, adaptationRate);
+            AdaptiveLogger.Detailed($"[Summoning] Bouncer: {beforeBoun:F2} → target={targetBoun:F2} → lerped={weights.SpawnBouncer:F2} (spawned={summary.EnemySpawnBouncer}, hits={hitsBoun}, eff={effBoun:F2})");
         }
 
         // Tank adaptation (only if spawned)
@@ -70,19 +74,28 @@ public class SummoningWeightAdapter : IWeightAdapter
     /// </summary>
     private float CalculateTargetWeight(float currentWeight, float effectiveness)
     {
-        // If effective, reduce weight slightly
-        if (effectiveness >= 0.8f)
+        // If effective enough (>=50% of expected), reduce weight slightly
+        if (effectiveness >= 0.5f)
         {
             return currentWeight * 0.9f;
         }
         
-        // If ineffective, increase weight but with diminishing returns
-        // Max increase per adaptation: +50% or +20 points (whichever is smaller)
-        float increase = (1f - effectiveness) * ADJUST_SCALE;
-        float maxIncrease = Mathf.Min(currentWeight * 0.5f, 20f);
-        float actualIncrease = Mathf.Min(currentWeight * increase, maxIncrease);
+        // If completely ineffective (0 hits), only small increase
+        if (effectiveness <= 0.01f)
+        {
+            // Max +2 points or +20% (much more conservative)
+            float smallIncrease = Mathf.Min(currentWeight * 0.2f, 2f);
+            return Mathf.Min(currentWeight + smallIncrease, 100f);  // Hard cap at 100
+        }
         
-        return currentWeight + actualIncrease;
+        // Partial effectiveness: moderate increase
+        // Max increase: +30% or +5 points (whichever is smaller)
+        float increase = (1f - effectiveness) * 0.3f;
+        float maxModerateIncrease = Mathf.Min(currentWeight * 0.3f, 5f);
+        float actualIncrease = currentWeight * increase;
+        actualIncrease = Mathf.Min(actualIncrease, maxModerateIncrease);
+        
+        return Mathf.Min(currentWeight + actualIncrease, 100f);  // Hard cap at 100
     }
 
     /// <summary>

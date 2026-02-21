@@ -93,10 +93,10 @@ public class PlayerAbilityController : MonoBehaviour
             _isReflecting = false;
 
             // destroy the VFX now that reflect ended
-            if (reflectVFX != null)
+            if (_reflectVFXInstance != null)
             {
-                Destroy(reflectVFX);
-                reflectVFX = null;
+                Destroy(_reflectVFXInstance);
+                _reflectVFXInstance = null;
             }
 
             Debug.Log("Reflect ended");
@@ -156,18 +156,20 @@ public class PlayerAbilityController : MonoBehaviour
         Debug.Log($"Smite hit {count} enemies for {smiteDamage} damage (radius {smiteRadius})");
     }
 
+    private GameObject _reflectVFXInstance; // Track the spawned instance
+    
     private void StartReflect()
     {
         _isReflecting   = true;
         _reflectEndTime = Time.time + reflectDuration;
 
         // if there's an old VFX hanging around, clear it first
-        if (reflectVFX != null)
-            Destroy(reflectVFX);
+        if (_reflectVFXInstance != null)
+            Destroy(_reflectVFXInstance);
 
         // spawn & keep a reference
         if (reflectVFX != null)
-            reflectVFX = Instantiate(
+            _reflectVFXInstance = Instantiate(
                 reflectVFX,
                 transform.position,
                 Quaternion.identity,

@@ -48,7 +48,8 @@ public class Attack : IState
         }
 
         // 3) Stop moving and trigger your attack animation
-        _agent.isStopped = true;
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
+            _agent.isStopped = true;
         _lastAttack      = Time.time - COOLDOWN;
         _anim?.SetTrigger("attack");
     }
@@ -105,7 +106,8 @@ public class Attack : IState
             _refs.ikHandler.ikActive = false;
 
         // 3) Resume movement and reset animation trigger
-        _agent.isStopped = false;
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
+            _agent.isStopped = false;
         //_anim?.ResetTrigger("attack", a);
         _anim?.ResetTrigger("attack");
     }

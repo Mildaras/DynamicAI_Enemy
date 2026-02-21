@@ -123,28 +123,32 @@ public class EnemyController : MonoBehaviour
                 //Offensive rules
                 decider.AddRule(new WeightedTransition(
                     follow, attack,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 2f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 2f
                             ? atck 
                             : 0f
                 ));
 
                 decider.AddRule(new WeightedTransition(
                     follow, castFast,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) >= 3f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) >= 3f
                             ? fastSpell 
                             : 1f
                 ));
 
                 decider.AddRule(new WeightedTransition(
                     follow, castMed,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) >= 3f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) >= 3f
                             ? mediumSpell 
                             : 1f
                 ));
 
                 decider.AddRule(new WeightedTransition(
                     follow, castSlow,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) >= 3f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) >= 3f
                             ? slowSpell 
                             : 0f
                 ));
@@ -152,7 +156,8 @@ public class EnemyController : MonoBehaviour
                 //Defensive rules
                 decider.AddRule(new WeightedTransition(
                     follow, cover,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) < 5f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) < 5f
                                             && enemy.CurrentHealth < 300f
                             ? coverForHealth 
                             : 0f
@@ -168,14 +173,16 @@ public class EnemyController : MonoBehaviour
                 
                 decider.AddRule(new WeightedTransition(
                     follow, wall,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 4f && playerFiredStaff
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 4f && playerFiredStaff
                             ? wallRangedAttack 
                             : 0f
                 ));
 
                 decider.AddRule(new WeightedTransition(
                     follow, heal,
-                    () => enemy.CurrentHealth <= (enemy.maxHealth * 0.8f) && 
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          enemy.CurrentHealth <= (enemy.maxHealth * 0.8f) && 
                         Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 10f
                             ? healHigh 
                             : 0f
@@ -190,7 +197,8 @@ public class EnemyController : MonoBehaviour
 
                 decider.AddRule(new WeightedTransition(
                     cover, wall,
-                    () => !cover.IsHidden && enemy.CurrentHealth < 300f && 
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          !cover.IsHidden && enemy.CurrentHealth < 300f && 
                         Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 15f
                         && Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) >= 4f
 
@@ -207,7 +215,8 @@ public class EnemyController : MonoBehaviour
 
                 decider.AddRule(new WeightedTransition(
                     follow, spawnExploders,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 7f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 7f
                             ? spawnExpl
                             : 0f
                 ));
@@ -221,7 +230,8 @@ public class EnemyController : MonoBehaviour
 
                 decider.AddRule(new WeightedTransition(
                     follow, spawnTank,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 15f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 15f
                     && Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 2f
                     && playerFiredStaff
                             ? defendTank 
@@ -230,7 +240,8 @@ public class EnemyController : MonoBehaviour
 
                 decider.AddRule(new WeightedTransition(
                     follow, spawnTank,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 15f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) <= 15f
                     && Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 2f
                             ? spawnTnk 
                             : 0f
@@ -303,14 +314,16 @@ public class EnemyController : MonoBehaviour
                 //Close states
                 decider.AddRule(
                     follow,
-                    () => Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 0f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 0f
                             ? justRun 
                             : 0f
                 );
 
                 decider.AddRule(
                     cover,
-                    () => !cover.IsHidden && Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 20f
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          !cover.IsHidden && Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) > 20f
                             ? tooFar 
                             : 0f
                 );
@@ -395,6 +408,7 @@ public class EnemyController : MonoBehaviour
                 float attackDist = enemyRefrences.attackRange; // assume also 3f
 
                 stateMachine.AddTransition(followMaster,guard,() =>
+                    enemyRefrences.transform != null && enemyRefrences.master != null &&
                     Vector3.Distance(enemyRefrences.transform.position,enemyRefrences.master.position) > guardDist
                 );
 
@@ -403,6 +417,7 @@ public class EnemyController : MonoBehaviour
                 // );
 
                 stateMachine.AddTransition(guard, attackBouncer, () =>
+                    enemyRefrences.transform != null && enemyRefrences.player != null &&
                     Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.player.position) 
                                     <= attackDist && ((BouncerAttackState)attackBouncer).IsReady
                 );
@@ -412,8 +427,9 @@ public class EnemyController : MonoBehaviour
                 );
 
                 stateMachine.AddTransition(guard,followMaster,() => 
+                    enemyRefrences.transform != null && enemyRefrences.master != null &&
                     Vector3.Distance(enemyRefrences.transform.position, enemyRefrences.master.position) > guardDist
-                );  
+                );
 
                 stateMachine.AddTransition(guard, dieBouncer, () => 
                     guard.TimeUp
@@ -432,7 +448,8 @@ public class EnemyController : MonoBehaviour
                 // Idle -> Chase when player detected
                 stateMachine.AddTransition(
                     idleTank, chaseTank,
-                    () => Vector3.Distance(
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(
                             enemyRefrences.transform.position,
                             enemyRefrences.player.position)
                             <= detect
@@ -440,7 +457,8 @@ public class EnemyController : MonoBehaviour
                 // Chase -> Attack when in close range
                 stateMachine.AddTransition(
                     chaseTank, attackTank,
-                    () => Vector3.Distance(
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(
                             enemyRefrences.transform.position,
                             enemyRefrences.player.position)
                             <= attackDistTank
@@ -448,7 +466,8 @@ public class EnemyController : MonoBehaviour
                 // Attack -> Chase if player moves out of attack range but still in detect range
                 stateMachine.AddTransition(
                     attackTank, chaseTank,
-                    () => Vector3.Distance(
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(
                             enemyRefrences.transform.position,
                             enemyRefrences.player.position)
                             > attackDistTank
@@ -458,7 +477,8 @@ public class EnemyController : MonoBehaviour
                 // Chase -> Idle if player leaves detect range
                 stateMachine.AddTransition(
                     chaseTank, idleTank,
-                    () => Vector3.Distance(
+                    () => enemyRefrences.transform != null && enemyRefrences.player != null &&
+                          Vector3.Distance(
                             enemyRefrences.transform.position,
                             enemyRefrences.player.position)
                             > detect
@@ -484,6 +504,10 @@ public class EnemyController : MonoBehaviour
 
     void Update()
     {
+        // Stop AI if enemy is destroyed
+        if (enemyRefrences == null || enemyRefrences.transform == null)
+            return;
+            
         if (_isStunned)
         {
             if (Time.time >= _stunEndTime)

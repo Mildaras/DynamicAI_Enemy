@@ -17,13 +17,14 @@ public class FollowMasterState : IState
 
     public void OnEnter()
     {
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = false;
     }
 
     public void Tick()
     {
-        if (_agent == null || _master == null) return;
+        if (_agent == null || _master == null || _refs.transform == null) return;
+        if (!_agent.isOnNavMesh || !_agent.isActiveAndEnabled) return;
 
         float dist = Vector3.Distance(_refs.transform.position, _master.position);
 
@@ -42,7 +43,7 @@ public class FollowMasterState : IState
 
     public void OnExit()
     {
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.ResetPath();
     }
 

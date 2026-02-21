@@ -27,8 +27,10 @@ public class GuardState : IState
         TimeUp    = false;
         _reached  = false;
 
-        if (_agent != null && _master != null)
+        if (_agent != null && _master != null && _refs.player != null)
         {
+            if (!_agent.isOnNavMesh || !_agent.isActiveAndEnabled) return;
+            
             _agent.isStopped = false;
 
             // Compute guard position between master and player
@@ -47,12 +49,16 @@ public class GuardState : IState
 
     public void Tick()
     {
+        if (_agent == null) return;
+        if (!_agent.isOnNavMesh || !_agent.isActiveAndEnabled) return;
+        
         if (!_reached)
         {
             if (!_agent.pathPending && _agent.remainingDistance <= _agent.stoppingDistance)
             {
                 _reached = true;
-                _agent.isStopped = true;
+                if (_agent.isOnNavMesh && _agent.isActiveAndEnabled)
+                    _agent.isStopped = true;
             }
             return;
         }
@@ -65,7 +71,7 @@ public class GuardState : IState
 
     public void OnExit()
     {
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = false;
 
         _anim?.ResetTrigger("defend");

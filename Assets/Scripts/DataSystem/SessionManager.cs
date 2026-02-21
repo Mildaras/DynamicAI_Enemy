@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -70,6 +71,14 @@ public class SessionManager : MonoBehaviour
         AdaptiveLogger.Critical($"Session ID: {_sessionId}");
         AdaptiveLogger.Critical($"Session folder: {_sessionDirectory}");
 
+        // Set ActionLogger to write directly to session folder
+        if (ActionLogger.Instance != null)
+        {
+            string sessionActionLogPath = Path.Combine(_sessionDirectory, "ActionLog.json");
+            ActionLogger.Instance.SetLogFilePath(sessionActionLogPath);
+            AdaptiveLogger.Important($"ActionLogger now writing to: {sessionActionLogPath}");
+        }
+        
         // Clear action logs for clean start
         if (clearLogsOnStart && ActionLogger.Instance != null)
         {
@@ -98,14 +107,9 @@ public class SessionManager : MonoBehaviour
         AdaptiveLogger.Critical($"=== SESSION ENDED ===");
         AdaptiveLogger.Critical($"Duration: {duration.TotalMinutes:F1} minutes");
         AdaptiveLogger.Critical($"Results saved to: {_sessionDirectory}");
-
-        // Copy action log to session folder
-        string actionLogPath = Path.Combine(Application.persistentDataPath, "ActionLog.json");
-        if (File.Exists(actionLogPath))
-        {
-            string sessionActionLog = Path.Combine(_sessionDirectory, "ActionLog.json");
-            File.Copy(actionLogPath, sessionActionLog, true);
-        }
+        
+        // ActionLog.json is already being written directly to session folder
+        AdaptiveLogger.Important("ActionLog.json is already in session folder");
 
         // Write session end info
         WriteSessionInfo("SESSION_END", 
@@ -168,20 +172,47 @@ public class SessionManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Save weight changes to current session.
+    /// Force ActionLogger to save pending data immediately.
+    /// </summary>
+    public void FlushActionLog()
+    {
+        if (ActionLogger.Instance != null)
+        {
+            ActionLogger.Instance.RunTheSave();
+            AdaptiveLogger.Detailed("Flushed ActionLog to disk");
+        }
+    }
+
+    /// <summary>
+    /// Save weight changes to current session (appends for gradual tracking).
     /// </summary>
     public void SaveWeightChanges(string changeReport)
     {
         if (string.IsNullOrEmpty(_sessionDirectory)) return;
 
         string weightsFile = Path.Combine(_sessionDirectory, "WeightChanges.txt");
-        File.WriteAllText(weightsFile, 
-            $"Weight Adaptation - Session {_sessionId}\n" +
-            $"Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
-            new string('=', 60) + "\n\n" +
-            changeReport);
-
-        AdaptiveLogger.Important($"Weight changes saved to session folder");
+        int adaptationNumber = GetAdaptationCount();
+        
+        var lines = new[]
+        {
+            "",
+            $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Weight Adaptation #{adaptationNumber}",
+            new string('=', 60),
+            changeReport,
+            ""
+        };
+        
+        File.AppendAllLines(weightsFile, lines);
+        _adaptationCount = adaptationNumber; // Cache for next call
+        AdaptiveLogger.Important($"Weight changes appended to session folder");
+    }
+    
+    private int _adaptationCount = 0;
+    
+    private int GetAdaptationCount()
+    {
+        // Use cached count + 1 for performance (avoids reading entire file each time)
+        return _adaptationCount + 1;
     }
 
     private void WriteSessionInfo(string header, string content)

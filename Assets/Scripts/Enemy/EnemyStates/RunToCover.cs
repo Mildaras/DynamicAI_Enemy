@@ -23,6 +23,8 @@ public class RunToCover : IState
     public void OnEnter()
     {
         IsHidden = false;
+        if (agent == null || !agent.isOnNavMesh || !agent.isActiveAndEnabled) return;
+        
         originalSpeed = agent.speed;
         agent.speed = originalSpeed * 1.5f; // Increase speed when running to cover
         agent.isStopped = false;
@@ -35,7 +37,8 @@ public class RunToCover : IState
 
     public void Tick()
     {
-        if (agent == null || player == null) return;
+        if (agent == null || player == null || enemy.transform == null) return;
+        if (!agent.isOnNavMesh || !agent.isActiveAndEnabled) return;
 
         float distToCover = Vector3.Distance(enemy.transform.position, hidePosition);
 

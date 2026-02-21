@@ -39,7 +39,7 @@ public class ExplodeState : IState
         _hasExploded = false;
 
         // Start running toward player
-        if (_agent != null)
+        if (_agent != null && _player != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
         {
             _agent.isStopped = false;
             _agent.SetDestination(_player.position);
@@ -51,10 +51,14 @@ public class ExplodeState : IState
         if (_hasExploded)
             return;
 
+        // Check if enemy or player is destroyed
+        if (_refs == null || _refs.transform == null || _player == null)
+            return;
+
         _timer += Time.deltaTime;
 
         // Continuously update destination
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.SetDestination(_player.position);
 
         float distToPlayer = Vector3.Distance(_refs.transform.position, _player.position);

@@ -91,7 +91,7 @@ public class CastSpell : IState
         _hasFired  = false;
         IsDone     = false;
 
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = true;
 
         _anim?.SetBool("isCasting", true);
@@ -170,7 +170,7 @@ public class CastSpell : IState
         
         _hasFired = false;
         IsDone    = false;
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = false;
 
         _anim?.ResetTrigger("castRelease");

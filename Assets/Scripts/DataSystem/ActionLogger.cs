@@ -189,6 +189,26 @@ public class ActionLogger : MonoBehaviour
     }
     
     /// <summary>
+    /// Set the log file path (used by SessionManager to log to session folders).
+    /// </summary>
+    public void SetLogFilePath(string newPath)
+    {
+        // Flush current pending writes before changing path
+        if (pendingDiskWrites.Count > 0)
+        {
+            SaveAndClear();
+        }
+        
+        filePath = newPath;
+        Debug.Log($"[ActionLogger] Changed log path to: {filePath}");
+    }
+    
+    /// <summary>
+    /// Get the current log file path.
+    /// </summary>
+    public string GetLogFilePath() => filePath;
+    
+    /// <summary>
     /// Clear all logged data (ring buffer and disk file).
     /// Call this after AI has successfully learned from the data.
     /// </summary>

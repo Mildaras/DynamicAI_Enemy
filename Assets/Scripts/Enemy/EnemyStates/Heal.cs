@@ -31,7 +31,7 @@ public class Heal : IState
         _timer   = 0f;
         IsDone   = false;
 
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = true;
 
         _anim?.SetBool("isHealing", true);
@@ -87,7 +87,7 @@ public class Heal : IState
             wasSuccessful: IsDone
         );
         
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = false;
 
         _anim?.SetBool("isHealing", false);

@@ -18,7 +18,8 @@ public class ChasePlayerState : IState
 
     public void OnEnter()
     {
-        if (_agent != null) _agent.isStopped = false;
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
+            _agent.isStopped = false;
 
         _anim?.SetFloat("speed", 1.5f);
     }
@@ -26,12 +27,14 @@ public class ChasePlayerState : IState
     public void Tick()
     {
         if (_agent == null || _player == null) return;
+        if (!_agent.isOnNavMesh || !_agent.isActiveAndEnabled) return;
         _agent.SetDestination(_player.position);
     }
 
     public void OnExit()
     {
-        if (_agent != null) _agent.ResetPath();
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
+            _agent.ResetPath();
 
         _anim?.SetFloat("speed", 0f);
     }

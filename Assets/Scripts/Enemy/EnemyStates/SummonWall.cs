@@ -40,7 +40,7 @@ public class SummonWall : IState
 
         // 1) Play summon‐wall animation & stop movement
         _anim?.SetTrigger("spawnExploders");
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = true;
 
         // 2) Compute spawn position in front of caster, snapped to NavMesh
@@ -100,7 +100,7 @@ public class SummonWall : IState
         );
         
         // resume movement & clear trigger
-        if (_agent != null)
+        if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = false;
         _anim?.ResetTrigger("spawnExploders");
     }
