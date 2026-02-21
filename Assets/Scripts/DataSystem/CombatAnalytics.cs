@@ -94,12 +94,19 @@ public class CombatAnalytics : MonoBehaviour
 
     public void RunAdaptation()
     {
-        // 1) Re-parse logs to get current session data
+        // 1) Flush pending log data to disk first
+        if (SessionManager.Instance != null)
+        {
+            SessionManager.Instance.FlushActionLog();
+            AdaptiveLogger.Detailed("Flushed pending actions to disk");
+        }
+        
+        // 2) Re-parse logs to get current session data
         var parser = new LogParser();
         (_summary, _detailed) = parser.ParseAll();
         AdaptiveLogger.Detailed("Parsed current session logs");
         
-        // 2) Find the Main enemy
+        // 3) Find the Main enemy
         var mainEnemy = FindObjectsOfType<EnemyController>()
             .FirstOrDefault(e => e.role == EnemyRole.Main);
         if (mainEnemy == null)
@@ -111,11 +118,11 @@ public class CombatAnalytics : MonoBehaviour
         string keyPrefix = mainEnemy.name + "_";
         AdaptiveLogger.Important($"\n========== ADAPTATION STARTED: {mainEnemy.name} ==========");
 
-        // 3) Build player behavior profile
+        // 4) Build player behavior profile
         var profile = PlayerProfile.Build(_summary, _detailed, maxMedianDistance);
         AdaptiveLogger.Important($"Player Profile:\n{profile}");
 
-        // 4) Load current weights from PlayerPrefs or enemy defaults
+        // 5) Load current weights from PlayerPrefs or enemy defaults
         var weights = new EnemyWeightProfile();
         weights.LoadFromPrefs(keyPrefix, mainEnemy);
         
@@ -124,37 +131,36 @@ public class CombatAnalytics : MonoBehaviour
         originalWeights.LoadFrom(mainEnemy);
         AdaptiveLogger.Detailed($"BEFORE adaptation:\n{FormatWeightsDetailed(originalWeights)}");
 
-        // 5) Run all adaptation strategies
+        // 6) Run all adaptation strategies
         foreach (var adapter in _adapters)
         {
             adapter.Adapt(profile, _summary, _detailed, weights, adaptationRate);
         }
 
-        // 6) Validate weights (clamp, NaN checks)
+        // 7) Validate weights (clamp, NaN checks)
         weights.Validate();
 
-        // 7) Save adapted weights to PlayerPrefs
+        // 8) Save adapted weights to PlayerPrefs
         weights.SaveToPrefs(keyPrefix);
 
-        // 8) Apply to enemy controller
+        // 9) Apply to enemy controller
         weights.ApplyTo(mainEnemy);
         
-        // 9) Show detailed before/after comparison
+        // 10) Show detailed before/after comparison
         AdaptiveLogger.Detailed($"AFTER adaptation:\n{FormatWeightsDetailed(weights)}");
         AdaptiveLogger.Critical(GenerateChangeReport(originalWeights, weights));
 
-        // 10) Display final combat summary
+        // 11) Display final combat summary
         LogConsoleSummary(_summary);
         
-        // 11) Save to current session folder
+        // 12) Save to current session folder
         if (SessionManager.Instance != null)
         {
-            SessionManager.Instance.FlushActionLog(); // Force save to disk
             SessionManager.Instance.SaveCombatSummary(_summary);
             SessionManager.Instance.SaveWeightChanges(GenerateChangeReport(originalWeights, weights));
         }
         
-        // 12) Also append to legacy summary file for backwards compatibility
+        // 13) Also append to legacy summary file for backwards compatibility
         AppendSummaryToFile(_summary);
     }
 

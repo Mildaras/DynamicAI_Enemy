@@ -14,7 +14,11 @@ public class Attack : IState
     private const float ATTACK_RANGE = 2f;
     private const float DAMAGE       = 50f;
     private const float COOLDOWN     = 1f;
+    private const float WINDUP_TIME  = 0.5f;  // Telegraph time before damage
     private float       _lastAttack;
+    private float       _attackStartTime;
+    private bool        _isWinding;
+    private bool        _damageDealt;
     public  bool  IsDone            { get; private set; }
 
     // sword instance
@@ -31,6 +35,9 @@ public class Attack : IState
     public void OnEnter()
     {
         IsDone = false;
+        _isWinding = false;
+        _damageDealt = false;
+        
         // 1) Spawn and parent the sword
         _swordInstance = Object.Instantiate(
             _refs.swordPrefab,
@@ -50,46 +57,79 @@ public class Attack : IState
         // 3) Stop moving and trigger your attack animation
         if (_agent != null && _agent.isOnNavMesh && _agent.isActiveAndEnabled)
             _agent.isStopped = true;
-        _lastAttack      = Time.time - COOLDOWN;
-        _anim?.SetTrigger("attack");
+        _lastAttack = Time.time - COOLDOWN;
     }
 
     public void Tick()
     {
         // Face the player
-        Vector3 dir = (_player.position - _refs.transform.position).normalized;
-        if (dir.sqrMagnitude > 0.001f)
+        if (_player != null)
         {
-            Quaternion target = Quaternion.LookRotation(dir);
-            _refs.transform.rotation = Quaternion.Slerp(
-                _refs.transform.rotation,
-                target,
-                Time.deltaTime * 5f
-            );
+            Vector3 dir = (_player.position - _refs.transform.position).normalized;
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                Quaternion target = Quaternion.LookRotation(dir);
+                _refs.transform.rotation = Quaternion.Slerp(
+                    _refs.transform.rotation,
+                    target,
+                    Time.deltaTime * 5f
+                );
+            }
         }
 
-        // If in range and cooled down, deal damage
-        float dist = Vector3.Distance(_refs.transform.position, _player.position);
-        if (dist <= ATTACK_RANGE && Time.time >= _lastAttack + COOLDOWN)
+        float dist = _player != null ? Vector3.Distance(_refs.transform.position, _player.position) : float.MaxValue;
+        
+        // Start attack windup if in range and ready
+        if (!_isWinding && !_damageDealt && dist <= ATTACK_RANGE && Time.time >= _lastAttack + COOLDOWN)
         {
-            _lastAttack = Time.time;
+            _isWinding = true;
+            _attackStartTime = Time.time;
             _anim?.SetTrigger("attack");
+            // Visual/audio telegraph here (could add particle effect, sound, etc.)
+        }
+        
+        // Apply damage after windup completes
+        if (_isWinding && !_damageDealt && Time.time >= _attackStartTime + WINDUP_TIME)
+        {
+            // Check if player is still in range (they might have dodged)
+            if (dist <= ATTACK_RANGE)
+            {
+                var enemy = _refs.GetComponent<Enemy>();
+                ActionLogger.Instance?.LogActionWithContext(
+                    actor:     "Enemy",
+                    actionType:"Enemy_MeleeAttack",   
+                    target:     "Player", 
+                    isHit:      true,
+                    damage:     DAMAGE,
+                    distance:   dist,
+                    actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
+                    targetHealthPercent: PlayerData.playerHealth / 100f,
+                    actorState: "Attacking",
+                    wasSuccessful: true
+                );
+                
+                PlayerData.takeDamage(DAMAGE);
+            }
+            else
+            {
+                // Player dodged! Log miss
+                var enemy = _refs.GetComponent<Enemy>();
+                ActionLogger.Instance?.LogActionWithContext(
+                    actor:     "Enemy",
+                    actionType:"Enemy_MeleeAttack",   
+                    target:     "Player", 
+                    isHit:      false,
+                    damage:     0f,
+                    distance:   dist,
+                    actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
+                    targetHealthPercent: PlayerData.playerHealth / 100f,
+                    actorState: "Attacking",
+                    wasSuccessful: false
+                );
+            }
             
-            var enemy = _refs.GetComponent<Enemy>();
-            ActionLogger.Instance?.LogActionWithContext(
-                actor:     "Enemy",
-                actionType:"Enemy_MeleeAttack",   
-                target:     "Player", 
-                isHit:      true,
-                damage:     DAMAGE,
-                distance:   dist,
-                actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
-                targetHealthPercent: PlayerData.playerHealth / 100f,
-                actorState: "Attacking",
-                wasSuccessful: true
-            );
-            
-            PlayerData.takeDamage(DAMAGE);
+            _damageDealt = true;
+            _lastAttack = Time.time;
             IsDone = true; // Attack is done
         }
     }

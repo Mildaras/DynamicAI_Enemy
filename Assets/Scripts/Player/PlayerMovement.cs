@@ -10,6 +10,8 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce;
     public float jumpCooldown;
     public float airMultiplier;
+    [Tooltip("How quickly player stops when no input (higher = snappier)")]
+    public float stopForce = 5f;
     public static bool dialogueActive = false;
     bool readyToJump;
     float jumps = 1;
@@ -64,8 +66,11 @@ public class PlayerMovement : MonoBehaviour
             SpeedControl();
             RotateModelToCamera();
 
-            // linear damping when grounded
-            rb.linearDamping = grounded ? groundDrag : 0f;
+            // Apply ground drag (friction) when grounded
+            if (grounded)
+                rb.linearDamping = groundDrag;
+            else
+                rb.linearDamping = 0f;
         }
         else
         {
@@ -134,10 +139,23 @@ public class PlayerMovement : MonoBehaviour
         moveDirection = orientation.forward * verticalInput
                       + orientation.right   * horizontalInput;
 
-        if (grounded)
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
-        else
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+        // Check if player is actively moving
+        bool isMoving = horizontalInput != 0f || verticalInput != 0f;
+        
+        if (isMoving)
+        {
+            // Apply movement force
+            if (grounded)
+                rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
+            else
+                rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+        }
+        else if (grounded)
+        {
+            // No input - apply stopping force for snappier feel
+            Vector3 flatVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            rb.AddForce(-flatVel * stopForce, ForceMode.Force);
+        }
     }
 
     private void SpeedControl()

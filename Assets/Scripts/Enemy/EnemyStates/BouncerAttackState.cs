@@ -5,7 +5,11 @@ public class BouncerAttackState : IState
 {
     private readonly EnemyRefrences _refs;
     private const float COOLDOWN = 1f;       // 1 second between attacks
+    private const float WINDUP_TIME = 0.4f;  // Telegraph before impact
     private float       _lastHitTime = -COOLDOWN;
+    private float       _windupStartTime;
+    private bool        _isWinding;
+    private bool        _damageDealt;
     private readonly Transform      _player;
     public  bool                   HasHit { get; private set; }
     public bool IsReady => Time.time >= _lastHitTime + COOLDOWN;
@@ -23,56 +27,89 @@ public class BouncerAttackState : IState
     public void OnEnter()
     {
         HasHit = false;
+        _isWinding = false;
+        _damageDealt = false;
         if (_refs.agent != null && _refs.agent.isOnNavMesh && _refs.agent.isActiveAndEnabled)
             _refs.agent.isStopped = false;
-
-        TryHit();
     }
 
-    private void TryHit()
+    private void StartWindup()
     {
-        if (_player == null) return;
+        if (_player == null || _isWinding || _damageDealt) return;
+        if (!IsReady) return;
 
-
-        // Check if player is within attack range
         float dist = Vector3.Distance(_refs.transform.position, _player.position);
-        if (dist > _refs.attackRange || !IsReady) return;
+        if (dist > _refs.attackRange) return;
         
-        // Damage
+        // Start windup
+        _isWinding = true;
+        _windupStartTime = Time.time;
         _anim?.SetTrigger("attack");
-        PlayerData.takeDamage(_refs.attackDamage);
+        
+        // Stop moving during windup
+        if (_refs.agent != null && _refs.agent.isOnNavMesh && _refs.agent.isActiveAndEnabled)
+            _refs.agent.isStopped = true;
+    }
+    
+    private void CheckHit()
+    {
+        if (!_isWinding || _damageDealt) return;
+        if (Time.time < _windupStartTime + WINDUP_TIME) return;
+        
+        // Windup complete, check if player is still in range
+        if (_player == null) return;
+        
+        float dist = Vector3.Distance(_refs.transform.position, _player.position);
+        bool hitLanded = dist <= _refs.attackRange;
         
         var enemy = _refs.GetComponent<Enemy>();
-        ActionLogger.Instance?.LogActionWithContext(
-            actor:     "Enemy",
-            actionType:"Enemy_BouncerAttack",   
-            target:     "Player", 
-            isHit:      true,
-            damage:     _refs.attackDamage,
-            distance:   dist,
-            actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
-            targetHealthPercent: PlayerData.playerHealth / 100f,
-            actorState: "Attacking",
-            wasSuccessful: true
-        );
-
-        // Knockback
-        var rb = _refs.playerRigidbody;
-        if (rb != null)
+        
+        if (hitLanded)
         {
-            Vector3 dir = (_player.position - _refs.transform.position).normalized;
-            rb.AddForce(dir * _refs.knockbackForce, ForceMode.Impulse);
+            // Hit! Apply damage and knockback
+            PlayerData.takeDamage(_refs.attackDamage);
+            
+            ActionLogger.Instance?.LogActionWithContext(
+                actor:     "Enemy",
+                actionType:"Enemy_BouncerAttack",   
+                target:     "Player", 
+                isHit:      true,
+                damage:     _refs.attackDamage,
+                distance:   dist,
+                actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
+                targetHealthPercent: PlayerData.playerHealth / 100f,
+                actorState: "Attacking",
+                wasSuccessful: true
+            );
+            
+            // Knockback
+            var rb = _refs.playerRigidbody;
+            if (rb != null)
+            {
+                Vector3 dir = (_player.position - _refs.transform.position).normalized;
+                rb.AddForce(dir * _refs.knockbackForce, ForceMode.Impulse);
+            }
         }
         else
         {
-            Debug.LogWarning("Player does not have a Rigidbody component for knockback.");
+            // Miss! Player dodged
+            ActionLogger.Instance?.LogActionWithContext(
+                actor:     "Enemy",
+                actionType:"Enemy_BouncerAttack",   
+                target:     "Player", 
+                isHit:      false,
+                damage:     0f,
+                distance:   dist,
+                actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
+                targetHealthPercent: PlayerData.playerHealth / 100f,
+                actorState: "Attacking",
+                wasSuccessful: false
+            );
         }
-
-        _lastHitTime = Time.time;
-        HasHit       = true;
-        if (_refs.agent != null && _refs.agent.isOnNavMesh && _refs.agent.isActiveAndEnabled)
-            _refs.agent.isStopped = true;
         
+        _damageDealt = true;
+        _lastHitTime = Time.time;
+        HasHit = true;
     }
 
     public void Tick() 
@@ -83,9 +120,17 @@ public class BouncerAttackState : IState
         if (_player == null || _refs == null || _refs.agent == null) return;
         if (!_refs.agent.isOnNavMesh || !_refs.agent.isActiveAndEnabled) return;
 
-        // keep chasing
-        _refs.agent.SetDestination(_player.position);
-        TryHit();
+        // Try to start windup if not already winding up
+        if (!_isWinding)
+        {
+            _refs.agent.SetDestination(_player.position);
+            StartWindup();
+        }
+        else
+        {
+            // During windup, check if hit should land
+            CheckHit();
+        }
     }
     public void OnExit()
     {
