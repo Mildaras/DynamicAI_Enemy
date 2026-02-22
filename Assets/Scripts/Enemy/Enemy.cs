@@ -76,6 +76,18 @@ public class Enemy : MonoBehaviour, IDamageable
         OnHealthChanged += healthBarInstance.SetHealth;
     }
 
+    /// <summary>
+    /// Scales max health (and current health proportionally) by the given multiplier.
+    /// Called by TelekinesisController when an enemy is enlarged.
+    /// </summary>
+    public void ScaleHealth(float multiplier)
+    {
+        float healthPercent = CurrentHealth / maxHealth;
+        maxHealth *= multiplier;
+        CurrentHealth = maxHealth * healthPercent;
+        OnHealthChanged?.Invoke(CurrentHealth / maxHealth);
+    }
+
     public void Heal(float amount)
     {
         if (IsDead) return;

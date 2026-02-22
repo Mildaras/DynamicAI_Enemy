@@ -543,7 +543,7 @@ MonoBehaviour:
   launchTravelTime: 0.5
   launchStartScale: 0.1
   detectDistance: 15
-  attackDistance: 2
+  attackDistance: 4
   tankAttackDamage: 100
   attackCooldown: 2
   tankPrefab: {fileID: 0}

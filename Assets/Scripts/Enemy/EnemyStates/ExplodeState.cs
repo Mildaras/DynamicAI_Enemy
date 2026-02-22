@@ -82,6 +82,10 @@ public class ExplodeState : IState
         float distToPlayer = Vector3.Distance(_refs.transform.position, _player.position);
         var enemy = _refs.GetComponent<Enemy>();
         
+        // Scale damage with enemy size
+        float scaleMultiplier = _refs.transform.localScale.x;
+        float scaledDamage = _explosionDamage * scaleMultiplier;
+        
         // Deal damage if close enough
         if (dealDamage)
         {
@@ -90,14 +94,14 @@ public class ExplodeState : IState
                 actionType:"Enemy_Explode",   
                 target:     "Player", 
                 isHit:      true,
-                damage:     _explosionDamage,
+                damage:     scaledDamage,
                 distance:   distToPlayer,
                 actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
                 targetHealthPercent: PlayerData.playerHealth / 100f,
                 actorState: "Exploding",
                 wasSuccessful: true
             );
-            PlayerData.takeDamage(_explosionDamage);
+            PlayerData.takeDamage(scaledDamage);
         }
         else
         {

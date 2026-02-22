@@ -12,7 +12,7 @@ public class Attack : IState
 
     // melee stats
     private const float ATTACK_RANGE = 2f;
-    private const float DAMAGE       = 50f;
+    private const float BASE_DAMAGE  = 50f;
     private const float COOLDOWN     = 1f;
     private const float WINDUP_TIME  = 0.5f;  // Telegraph time before damage
     private float       _lastAttack;
@@ -104,13 +104,14 @@ public class Attack : IState
             // Check if player is still in range (they might have dodged)
             if (dist <= scaledAttackRange)
             {
+                float scaledDamage = BASE_DAMAGE * currentScale;
                 var enemy = _refs.GetComponent<Enemy>();
                 ActionLogger.Instance?.LogActionWithContext(
                     actor:     "Enemy",
                     actionType:"Enemy_MeleeAttack",   
                     target:     "Player", 
                     isHit:      true,
-                    damage:     DAMAGE,
+                    damage:     scaledDamage,
                     distance:   dist,
                     actorHealthPercent: enemy?.CurrentHealth / enemy?.maxHealth ?? -1f,
                     targetHealthPercent: PlayerData.playerHealth / 100f,
@@ -118,7 +119,7 @@ public class Attack : IState
                     wasSuccessful: true
                 );
                 
-                PlayerData.takeDamage(DAMAGE);
+                PlayerData.takeDamage(scaledDamage);
             }
             else
             {

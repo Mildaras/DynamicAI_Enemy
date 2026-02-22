@@ -19,6 +19,8 @@ public class HealthBar : MonoBehaviour
     private Transform target;
     private Camera mainCam;
     private Vector3 calculatedOffset;
+    private Vector3 originalTargetScale;
+    private Vector3 originalLocalScale;
 
     /// <summary>
     /// Call once right after Instantiate to hook up.
@@ -53,6 +55,9 @@ public class HealthBar : MonoBehaviour
             halfHeight + verticalMargin,
             horizontalOffset.y
         );
+
+        originalTargetScale = targetTransform.localScale;
+        originalLocalScale = transform.localScale;
     }
 
     void LateUpdate()
@@ -63,8 +68,10 @@ public class HealthBar : MonoBehaviour
             return;
         }
 
-        // Follow and billboard
-        transform.position = target.position + calculatedOffset;
+        // Scale health bar with enemy size
+        float scaleRatio = target.localScale.x / originalTargetScale.x;
+        transform.position = target.position + calculatedOffset * scaleRatio;
+        transform.localScale = originalLocalScale * scaleRatio;
         transform.rotation = Quaternion.LookRotation(transform.position - mainCam.transform.position);
     }
 

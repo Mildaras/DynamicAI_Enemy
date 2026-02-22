@@ -134,10 +134,11 @@ public class CastSpell : IState
                     Quaternion.identity
                 );
                 var proj = go.GetComponent<SpellProjectile>();
+                float scaleMultiplier = _refs.transform.localScale.x;
                 proj?.Initialize(
                     targetPos,
                     _spellSpeed,
-                    _spellDamage,
+                    _spellDamage * scaleMultiplier,
                     _spellLifeTime
                 );
                 projectile = proj;

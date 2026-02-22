@@ -103,6 +103,22 @@ public class TelekinesisController : MonoBehaviour
                             refs.attackDistance *= scaleMultiplier;
                             refs.attackRange *= scaleMultiplier;
                             
+                            // Scale damage values
+                            refs.attackDamage *= scaleMultiplier;
+                            refs.tankAttackDamage *= scaleMultiplier;
+                            refs.knockbackForce *= scaleMultiplier;
+                            refs.explosionDamage *= scaleMultiplier;
+                            refs.fastSpellDamage *= scaleMultiplier;
+                            refs.medSpellDamage *= scaleMultiplier;
+                            refs.slowSpellDamage *= scaleMultiplier;
+                            
+                            // Scale health
+                            var enemyHP = enemy.GetComponent<Enemy>();
+                            if (enemyHP != null)
+                            {
+                                enemyHP.ScaleHealth(scaleMultiplier);
+                            }
+                            
                             // Scale NavMeshAgent stopping distance
                             var navAgent = enemy.GetComponent<UnityEngine.AI.NavMeshAgent>();
                             if (navAgent != null && navAgent.isOnNavMesh)
