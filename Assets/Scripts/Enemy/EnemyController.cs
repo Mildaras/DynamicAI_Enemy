@@ -193,18 +193,39 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
+        // Initialize core components
         enemyRefrences = GetComponent<EnemyRefrences>();
         stateMachine = GetComponent<StateMachine>() ?? gameObject.AddComponent<StateMachine>();
-        Enemy enemy     = enemyRefrences.GetComponent<Enemy>();
-        Transform player = enemyRefrences.player;
-        Transform self   = enemyRefrences.transform;
         decider = gameObject.AddComponent<WeightedTransitionManager>();
+        
         var follow = new FollowPlayer(enemyRefrences);
         decider.SetDefaultTarget(follow);
 
+        // Setup behavior based on role
         switch (role)
         {
             case EnemyRole.Main:
+                SetupMainEnemyBehavior(follow);
+                break;
+            case EnemyRole.Exploder:
+                SetupExploderBehavior();
+                break;
+            case EnemyRole.Bouncer:
+                SetupBouncerBehavior();
+                break;
+            case EnemyRole.Tank:
+                SetupTankBehavior();
+                break;
+        }
+    }
+    
+    #region Enemy Setup Methods
+    /// <summary>
+    /// Setup Main enemy boss behavior with all states and weighted transitions.
+    /// </summary>
+    private void SetupMainEnemyBehavior(FollowPlayer follow)
+    {
+        Enemy enemy = enemyRefrences.GetComponent<Enemy>();
 
                 var cover  = new RunToCover(enemyRefrences);
                 var heal = new Heal(enemyRefrences);
@@ -504,14 +525,24 @@ public class EnemyController : MonoBehaviour
                             : 0f
                 );
 
-                // Set initial state
-                stateMachine.SetState(follow);
-            break;
-            case EnemyRole.Exploder:
-                var explode = new ExplodeState(enemyRefrences);
-                stateMachine.SetState(explode);
-            break;
-            case EnemyRole.Bouncer:
+        // Set initial state
+        stateMachine.SetState(follow);
+    }
+    
+    /// <summary>
+    /// Setup Exploder enemy behavior.
+    /// </summary>
+    private void SetupExploderBehavior()
+    {
+        var explode = new ExplodeState(enemyRefrences);
+        stateMachine.SetState(explode);
+    }
+    
+    /// <summary>
+    /// Setup Bouncer enemy behavior with guard and attack states.
+    /// </summary>
+    private void SetupBouncerBehavior()
+    {
                 var followMaster = new FollowMasterState(enemyRefrences);
                 var guard        = new GuardState(enemyRefrences);
                 var attackBouncer= new BouncerAttackState(enemyRefrences);
@@ -543,10 +574,15 @@ public class EnemyController : MonoBehaviour
                 stateMachine.AddTransition(guard, dieBouncer, () => 
                     guard.TimeUp
                 );
-                
-                stateMachine.SetState(followMaster);
-            break;
-            case EnemyRole.Tank:
+        
+        stateMachine.SetState(followMaster);
+    }
+    
+    /// <summary>
+    /// Setup Tank enemy behavior with idle, chase, and attack states.
+    /// </summary>
+    private void SetupTankBehavior()
+    {
                 var idleTank  = new IdleState(enemyRefrences);
                 var chaseTank = new ChasePlayerState(enemyRefrences);
                 var attackTank = new TankAttackState(enemyRefrences);
@@ -593,11 +629,10 @@ public class EnemyController : MonoBehaviour
                             > detect
                 );
 
-                // Start in Idle
-                stateMachine.SetState(idleTank);
-            break;
-        }
+        // Start in Idle
+        stateMachine.SetState(idleTank);
     }
+    #endregion
 
     public void Stun(float duration)
     {
