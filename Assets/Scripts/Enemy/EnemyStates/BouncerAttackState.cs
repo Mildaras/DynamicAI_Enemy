@@ -39,7 +39,11 @@ public class BouncerAttackState : IState
         if (!IsReady) return;
 
         float dist = Vector3.Distance(_refs.transform.position, _player.position);
-        if (dist > _refs.attackRange) return;
+        
+        // Use attack range directly from _refs (already scaled by TelekinesisController if enlarged)
+        float attackRange = _refs.attackRange;
+        
+        if (dist > attackRange) return;
         
         // Start windup
         _isWinding = true;
@@ -60,7 +64,11 @@ public class BouncerAttackState : IState
         if (_player == null) return;
         
         float dist = Vector3.Distance(_refs.transform.position, _player.position);
-        bool hitLanded = dist <= _refs.attackRange;
+        
+        // Use attack range directly from _refs (already scaled by TelekinesisController if enlarged)
+        float attackRange = _refs.attackRange;
+        
+        bool hitLanded = dist <= attackRange;
         
         var enemy = _refs.GetComponent<Enemy>();
         

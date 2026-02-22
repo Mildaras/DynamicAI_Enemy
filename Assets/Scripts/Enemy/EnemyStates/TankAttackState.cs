@@ -5,7 +5,7 @@ public class TankAttackState : IState
     private readonly EnemyRefrences _refs;
     private readonly Transform      _player;
     private float                   _lastAttack;
-    private const float WINDUP_TIME = 1.5f;  // Slower, heavier attacks
+    private const float WINDUP_TIME = 1.1f;  // Slower, heavier attacks
     private float                   _attackStartTime;
     private bool                    _isWinding;
     private bool                    _damageDealt;
@@ -24,12 +24,25 @@ public class TankAttackState : IState
     {
         _isWinding = false;
         _damageDealt = false;
+        Debug.Log($"<color=magenta>[TankAttack] Entered attack state | attackDistance: {_refs.attackDistance:F2}m</color>");
     }
 
     public void Tick()
     {
         if (_player == null) return;
         float dist = Vector3.Distance(_refs.transform.position, _player.position);
+        
+        // Use attack distance directly from _refs (already scaled by TelekinesisController if enlarged)
+        float attackRange = _refs.attackDistance;
+        
+        // Debug: Show why tank can't attack
+        float scale = _refs.transform.localScale.x;
+        if (scale > 1.1f && !_isWinding)
+        {
+            bool inRange = dist <= attackRange;
+            bool offCooldown = Time.time >= _lastAttack + _refs.attackCooldown;
+            Debug.Log($"<color=cyan>[TankAttack] Dist: {dist:F2}m | Range: {attackRange:F2}m | InRange: {inRange} | OffCooldown: {offCooldown} | Scale: {scale:F2}x</color>");
+        }
 
         // Face the player
         Vector3 dir = (_player.position - _refs.transform.position).normalized;
@@ -40,8 +53,14 @@ public class TankAttackState : IState
                 Time.deltaTime * 5f
             );
 
+        // Reset damage dealt flag after cooldown to allow another attack
+        if (_damageDealt && Time.time >= _lastAttack + _refs.attackCooldown)
+        {
+            _damageDealt = false;
+        }
+        
         // Start attack windup if in range and off cooldown
-        if (!_isWinding && !_damageDealt && dist <= _refs.attackDistance && Time.time >= _lastAttack + _refs.attackCooldown)
+        if (!_isWinding && !_damageDealt && dist <= attackRange && Time.time >= _lastAttack + _refs.attackCooldown)
         {
             _isWinding = true;
             _attackStartTime = Time.time;
@@ -53,7 +72,7 @@ public class TankAttackState : IState
         if (_isWinding && !_damageDealt && Time.time >= _attackStartTime + WINDUP_TIME)
         {
             // Check if player is still in range (they might have dodged)
-            bool hitLanded = dist <= _refs.attackDistance;
+            bool hitLanded = dist <= attackRange;
             var enemy = _refs.GetComponent<Enemy>();
             
             if (hitLanded)

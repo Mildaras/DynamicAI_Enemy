@@ -10,8 +10,8 @@ public class ActionLogger : MonoBehaviour
     public static ActionLogger Instance;
 
     [Header("Logging Settings")]
-    [Tooltip("How often (seconds) to flush the log to disk")]
-    public float saveInterval = 60f;  // Increased to reduce I/O
+    [Tooltip("How often (seconds) to save log to disk and trigger AI adaptation. Lower = more frequent adaptation, higher = less I/O overhead. Recommended: 30-60s")]
+    public float saveInterval = 60f;
     
     [Tooltip("Maximum number of recent events to keep in memory for real-time learning")]
     public int ringBufferSize = 200;
@@ -278,6 +278,7 @@ public class ActionLogger : MonoBehaviour
     /// <summary>
     /// Reads the existing JSON file (if any), merges in new records
     /// (deduped & sorted), then writes the whole thing back out.
+    /// After saving, triggers automatic AI adaptation.
     /// </summary>
     private void SaveAndClear()
     {
@@ -338,6 +339,21 @@ public class ActionLogger : MonoBehaviour
         }
 
         pendingDiskWrites.Clear();
+        
+        // Trigger automatic adaptation after saving
+        TriggerAdaptation();
+    }
+    
+    /// <summary>
+    /// Notify CombatAnalytics to run adaptation automatically.
+    /// </summary>
+    private void TriggerAdaptation()
+    {
+        var analytics = FindObjectOfType<CombatAnalytics>();
+        if (analytics != null)
+        {
+            analytics.RunAdaptation();
+        }
     }
 }
 

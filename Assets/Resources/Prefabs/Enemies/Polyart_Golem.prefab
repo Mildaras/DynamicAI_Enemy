@@ -405,7 +405,7 @@ CapsuleCollider:
   m_Radius: 1.5
   m_Height: 5
   m_Direction: 1
-  m_Center: {x: 0.095287085, y: 2.0121152, z: 0.35478652}
+  m_Center: {x: 0, y: 2.0121152, z: 0}
 --- !u!195 &3014764563521348811
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -445,6 +445,8 @@ MonoBehaviour:
   healthBarPrefab: {fileID: 3079993678478981673, guid: 55db18e829c771f4ebb0c4c9513180a3, type: 3}
   animator: {fileID: 1077356409}
   deathDelay: 2
+  allowExternalVelocity: 0
+  hasBeenEnlarged: 0
 --- !u!114 &8923991504447267485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -541,7 +543,7 @@ MonoBehaviour:
   launchTravelTime: 0.5
   launchStartScale: 0.1
   detectDistance: 15
-  attackDistance: 3
+  attackDistance: 2
   tankAttackDamage: 100
   attackCooldown: 2
   tankPrefab: {fileID: 0}

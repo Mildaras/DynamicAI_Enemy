@@ -49,6 +49,10 @@ public class PlayerMovement : MonoBehaviour
 
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
+        
+        // Disable physics collision between player and enemies
+        // This prevents player from pushing enemies when running into them
+        IgnoreEnemyCollisions();
     }
 
     private void Update()
@@ -191,5 +195,44 @@ public class PlayerMovement : MonoBehaviour
     void ResetExtraJump()
     {
         extraJumps++;
+    }
+    
+    /// <summary>
+    /// Disable physics collisions between player and all enemies.
+    /// This prevents player from pushing enemies when running into them.
+    /// </summary>
+    private void IgnoreEnemyCollisions()
+    {
+        Collider playerCollider = GetComponent<Collider>();
+        if (playerCollider == null)
+        {
+            Debug.LogWarning("PlayerMovement: No collider found on player!");
+            return;
+        }
+        
+        // Find all enemy colliders in the scene
+        var enemies = FindObjectsOfType<Enemy>();
+        foreach (var enemy in enemies)
+        {
+            Collider enemyCollider = enemy.GetComponent<Collider>();
+            if (enemyCollider != null)
+            {
+                Physics.IgnoreCollision(playerCollider, enemyCollider, true);
+            }
+        }
+        
+        Debug.Log($"Ignored collisions between player and {enemies.Length} enemies");
+    }
+    
+    /// <summary>
+    /// Call this when a new enemy spawns to ignore collision with player.
+    /// </summary>
+    public void IgnoreEnemyCollision(Collider enemyCollider)
+    {
+        Collider playerCollider = GetComponent<Collider>();
+        if (playerCollider != null && enemyCollider != null)
+        {
+            Physics.IgnoreCollision(playerCollider, enemyCollider, true);
+        }
     }
 }

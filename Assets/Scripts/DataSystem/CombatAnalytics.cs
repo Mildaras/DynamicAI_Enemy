@@ -7,6 +7,9 @@ using UnityEngine;
 public class CombatAnalytics : MonoBehaviour
 {
     [Header("Adaptation Settings")]
+    [Tooltip("Automatically adapt AI after action log saves (recommended)")]
+    public bool autoAdaptation = true;
+    
     [Range(0f, 1f)]
     [Tooltip("How aggressively the MAIN enemy adjusts its weights based on player behavior")]
     public float adaptationRate = 0.5f;
@@ -41,11 +44,19 @@ public class CombatAnalytics : MonoBehaviour
         var parser = new LogParser();
         (_summary, _detailed) = parser.ParseAll();
 
-        AdaptiveLogger.Important("Logs parsed; press 'K' to run adaptation.");
+        if (autoAdaptation)
+        {
+            AdaptiveLogger.Important("Auto-adaptation enabled - AI will adapt automatically when logs are saved.");
+        }
+        else
+        {
+            AdaptiveLogger.Important("Manual adaptation mode - press 'K' to run adaptation.");
+        }
     }
 
     void Update()
     {
+        // Manual trigger still available even with auto-adaptation on
         if (Input.GetKeyDown(KeyCode.K))
             RunAdaptation();
     }
@@ -94,6 +105,12 @@ public class CombatAnalytics : MonoBehaviour
 
     public void RunAdaptation()
     {
+        // Skip if auto-adaptation is disabled and this wasn't a manual trigger
+        if (!autoAdaptation && !Input.GetKeyDown(KeyCode.K))
+        {
+            return;
+        }
+        
         // 1) Flush pending log data to disk first
         if (SessionManager.Instance != null)
         {

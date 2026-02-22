@@ -3891,6 +3891,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 638393424}
   m_CullTransparentMesh: 1
+--- !u!1 &640685582
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 640685584}
+  - component: {fileID: 640685583}
+  m_Layer: 0
+  m_Name: DebugSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &640685583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 640685582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e9905ac1d4f8af49a9f466a2fdfb9a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tankPrefab: {fileID: 1077356408, guid: 23dd497df98bb664c8d61bcac6f13ac2, type: 3}
+  spawnDistance: 5
+  spawnKey: 108
+--- !u!4 &640685584
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 640685582}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 15.88, y: 0, z: 5.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &647172145
 GameObject:
   m_ObjectHideFlags: 0
@@ -13219,6 +13266,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea49b0084cb83bc488288ba26164cf17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  autoAdaptation: 1
   adaptationRate: 0.5
   maxMedianDistance: 5
   logLevel: 2
@@ -15195,6 +15243,12 @@ MonoBehaviour:
   sensX: 400
   sensY: 400
   player: {fileID: 6876458451041616292}
+  enableHeadBob: 1
+  walkBobAmount: 0.05
+  sprintBobAmount: 0.08
+  walkBobSpeed: 12
+  sprintBobSpeed: 16
+  bobResetSpeed: 5
 --- !u!222 &2295022960740132637
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17775,6 +17829,7 @@ MonoBehaviour:
   jumpForce: 10
   jumpCooldown: 0.25
   airMultiplier: 0.4
+  stopForce: 5
   jumpKey: 32
   sprintKey: 304
   playerHeight: 2
@@ -21135,7 +21190,7 @@ CapsuleCollider:
   m_Radius: 0.22109985
   m_Height: 2
   m_Direction: 1
-  m_Center: {x: -0.016906738, y: 0, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8464299552900316547
 GameObject:
   m_ObjectHideFlags: 0
@@ -21809,3 +21864,4 @@ SceneRoots:
   - {fileID: 1054360855}
   - {fileID: 1607220356}
   - {fileID: 1269418863}
+  - {fileID: 640685584}

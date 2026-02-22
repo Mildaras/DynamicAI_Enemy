@@ -6,8 +6,22 @@ using UnityEngine;
 
 public class LogParser
 {
-    // Path to the JSON log file
-    private string _logPath => Path.Combine(Application.persistentDataPath, "ActionsLog.json");
+    /// <summary>
+    /// Get the current action log path from ActionLogger (which may be session-specific).
+    /// </summary>
+    private string _logPath
+    {
+        get
+        {
+            // Use ActionLogger's current file path (may be in a session folder)
+            if (ActionLogger.Instance != null)
+            {
+                return ActionLogger.Instance.GetLogFilePath();
+            }
+            // Fallback to default if ActionLogger not initialized
+            return Path.Combine(Application.persistentDataPath, "ActionsLog.json");
+        }
+    }
 
     /// <summary>
     /// Detailed per-(ActionType, Actor) stats.

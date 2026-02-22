@@ -552,7 +552,7 @@ public class EnemyController : MonoBehaviour
                 var attackTank = new TankAttackState(enemyRefrences);
 
                 float detect = enemyRefrences.detectDistance;
-                float attackDistTank = enemyRefrences.attackDistance;
+                // DON'T capture attackDistance - read it dynamically from enemyRefrences so it updates when scaled
 
                 // Idle -> Chase when player detected
                 stateMachine.AddTransition(
@@ -563,23 +563,23 @@ public class EnemyController : MonoBehaviour
                             enemyRefrences.player.position)
                             <= detect
                 );
-                // Chase -> Attack when in close range
+                // Chase -> Attack when in close range (read current attackDistance dynamically)
                 stateMachine.AddTransition(
                     chaseTank, attackTank,
                     () => enemyRefrences.transform != null && enemyRefrences.player != null &&
                           Vector3.Distance(
                             enemyRefrences.transform.position,
                             enemyRefrences.player.position)
-                            <= attackDistTank
+                            <= enemyRefrences.attackDistance
                 );
-                // Attack -> Chase if player moves out of attack range but still in detect range
+                // Attack -> Chase if player moves out of attack range (read current attackDistance dynamically)
                 stateMachine.AddTransition(
                     attackTank, chaseTank,
                     () => enemyRefrences.transform != null && enemyRefrences.player != null &&
                           Vector3.Distance(
                             enemyRefrences.transform.position,
                             enemyRefrences.player.position)
-                            > attackDistTank
+                            > enemyRefrences.attackDistance
                 );
 
                 

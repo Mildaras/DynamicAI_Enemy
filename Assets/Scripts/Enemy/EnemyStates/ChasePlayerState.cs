@@ -28,7 +28,26 @@ public class ChasePlayerState : IState
     {
         if (_agent == null || _player == null) return;
         if (!_agent.isOnNavMesh || !_agent.isActiveAndEnabled) return;
+        
         _agent.SetDestination(_player.position);
+        
+        // Fix rotation bug: manually rotate to face player if NavMesh rotation is off
+        // This fixes the issue where enemies face wrong direction after being pushed
+        if (_agent.velocity.sqrMagnitude > 0.1f) // Only rotate when moving
+        {
+            Vector3 direction = (_player.position - _refs.transform.position).normalized;
+            direction.y = 0; // Keep rotation on horizontal plane only
+            
+            if (direction.sqrMagnitude > 0.01f)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                _refs.transform.rotation = Quaternion.Slerp(
+                    _refs.transform.rotation,
+                    targetRotation,
+                    Time.deltaTime * 5f // Smooth rotation speed
+                );
+            }
+        }
     }
 
     public void OnExit()

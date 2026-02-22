@@ -21,14 +21,45 @@ public class Enemy : MonoBehaviour, IDamageable
     public event Action OnDeath;
     [SerializeField] private float deathDelay = 2f;
 
+    private Rigidbody rb;
+    
+    /// <summary>
+    /// Set this to true to allow external velocity control (e.g., telekinesis weapon).
+    /// When true, Enemy.cs won't reset velocity in FixedUpdate.
+    /// </summary>
+    [HideInInspector] public bool allowExternalVelocity = false;
+    
+    /// <summary>
+    /// Tracks if this enemy has been affected by telekinesis.
+    /// Once true, telekinesis can no longer affect this enemy.
+    /// </summary>
+    [HideInInspector] public bool hasBeenEnlarged = false;
+    
     void Awake()
     {
         CurrentHealth = maxHealth;
         animator = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody>();
 
         if (showHealthBar && healthBarPrefab != null)
         {
             SpawnHealthBar();
+        }
+        
+        // Prevent player from pushing this enemy
+        IgnorePlayerCollision();
+    }
+    
+    void FixedUpdate()
+    {
+        // Reset any unwanted velocity to prevent enemies from sliding
+        // NavMeshAgent handles movement, so Rigidbody velocity should always be zero
+        // UNLESS external systems (like telekinesis) are controlling velocity
+        if (rb != null && !IsDead && !allowExternalVelocity)
+        {
+            // Reset horizontal velocity (allow gravity on Y axis)
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+            rb.angularVelocity = Vector3.zero;
         }
     }
 
@@ -87,5 +118,25 @@ public class Enemy : MonoBehaviour, IDamageable
         }
 
         Destroy(gameObject, deathDelay);
+    }
+    
+    /// <summary>
+    /// Disable physics collision with player to prevent pushing.
+    /// </summary>
+    private void IgnorePlayerCollision()
+    {
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            var playerMovement = player.GetComponent<PlayerMovement>();
+            if (playerMovement != null)
+            {
+                Collider enemyCollider = GetComponent<Collider>();
+                if (enemyCollider != null)
+                {
+                    playerMovement.IgnoreEnemyCollision(enemyCollider);
+                }
+            }
+        }
     }
 }

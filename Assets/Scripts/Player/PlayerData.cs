@@ -38,9 +38,9 @@ public class PlayerData : MonoBehaviour
         playerShield = shield;
         playerGold = gold;
 
-        healthText.text = health.ToString();
-        shieldText.text = shield.ToString();
-        goldText.text = gold.ToString();
+        healthText.text = Mathf.RoundToInt(health).ToString();
+        shieldText.text = Mathf.RoundToInt(shield).ToString();
+        goldText.text = Mathf.RoundToInt(gold).ToString();
 
 
         if (Input.GetKeyDown(KeyCode.C))

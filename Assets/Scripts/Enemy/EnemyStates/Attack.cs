@@ -79,8 +79,18 @@ public class Attack : IState
 
         float dist = _player != null ? Vector3.Distance(_refs.transform.position, _player.position) : float.MaxValue;
         
+        // Scale attack range with enemy size (for enlarged enemies)
+        float currentScale = _refs.transform.localScale.x;
+        float scaledAttackRange = ATTACK_RANGE * currentScale;
+        
+        // Debug: Log attack range when starting attack
+        if (!_isWinding && !_damageDealt && dist <= scaledAttackRange && Time.time >= _lastAttack + COOLDOWN)
+        {
+            Debug.Log($"<color=yellow>[Attack] Scale: {currentScale:F2}x | Base Range: {ATTACK_RANGE}m | Scaled Range: {scaledAttackRange:F2}m | Distance: {dist:F2}m</color>");
+        }
+        
         // Start attack windup if in range and ready
-        if (!_isWinding && !_damageDealt && dist <= ATTACK_RANGE && Time.time >= _lastAttack + COOLDOWN)
+        if (!_isWinding && !_damageDealt && dist <= scaledAttackRange && Time.time >= _lastAttack + COOLDOWN)
         {
             _isWinding = true;
             _attackStartTime = Time.time;
@@ -92,7 +102,7 @@ public class Attack : IState
         if (_isWinding && !_damageDealt && Time.time >= _attackStartTime + WINDUP_TIME)
         {
             // Check if player is still in range (they might have dodged)
-            if (dist <= ATTACK_RANGE)
+            if (dist <= scaledAttackRange)
             {
                 var enemy = _refs.GetComponent<Enemy>();
                 ActionLogger.Instance?.LogActionWithContext(
