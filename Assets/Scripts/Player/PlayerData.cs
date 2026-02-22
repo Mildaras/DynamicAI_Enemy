@@ -59,43 +59,20 @@ public class PlayerData : MonoBehaviour
     {
         while (health < maxHealth || shield < maxShield)
         {
+            float regenThisFrame = extraRegen * Time.deltaTime;
+
             if (health < maxHealth)
             {
-                float missingHealth = maxHealth - health;
-                if (extraRegen > missingHealth)
-                {
-                    health = maxHealth;
-                }
-                else
-                {
-                    health += extraRegen;
-                }
+                health = Mathf.Min(health + regenThisFrame, maxHealth);
             }
             else if (shield < maxShield)
             {
-                shieldRegeneration(extraRegen);
+                shield = Mathf.Min(shield + regenThisFrame, maxShield);
             }
 
-            yield return new WaitForSeconds(1f);
+            yield return null;
         }
-        //print("Regeneration complete");
         regenCoroutine = null;
-    }
-
-    private void shieldRegeneration(float extra)
-    {
-        if (shield < maxShield)
-        {
-            float missingShield = maxShield - shield;
-            if (extra > missingShield)
-            {
-                shield = maxShield;
-            }
-            else
-            {
-                shield += extra;
-            }
-        }
     }
 
     public static void takeDamage(float damage)
@@ -116,6 +93,12 @@ public class PlayerData : MonoBehaviour
         else
         {
             health -= damage;
+        }
+        
+        // Trigger damage indicator (red flash + screen shake)
+        if (DamageIndicator.Instance != null)
+        {
+            DamageIndicator.Instance.OnDamageTaken(damage);
         }
 
         // trigger death exactly once

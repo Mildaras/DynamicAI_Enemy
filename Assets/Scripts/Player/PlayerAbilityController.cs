@@ -8,7 +8,12 @@ public class PlayerAbilityController : MonoBehaviour
     public KeyCode blinkKey = KeyCode.F;
     public float blinkDistance = 6f;
     public float blinkCooldown = 10f;
+    public float blinkFOVBoost = 10f;        // Extra FOV during blink
+    public float blinkFOVDuration = 0.3f;    // How long the FOV boost lasts
+    public float blinkVelocityBoost = 15f;   // Forward velocity added after blink
+    public LayerMask blinkObstacleMask;      // What blocks blinks (walls, etc)
     private float lastBlinkTime = -999f;
+    private float _baseFOV;
 
     [Header("Stun Pulse")]
     public KeyCode stunKey      = KeyCode.G;
@@ -48,7 +53,9 @@ public class PlayerAbilityController : MonoBehaviour
     {
         if (cam == null)
             cam = Camera.main;
-
+        
+        if (cam != null)
+            _baseFOV = cam.fieldOfView;
     }
 
     void Update()
@@ -266,19 +273,36 @@ public class PlayerAbilityController : MonoBehaviour
 
     void Blink()
     {
-        Vector3 dir = transform.forward;
+        Vector3 dir = cam.transform.forward; // Use camera forward for more intuitive direction
+        dir.y = 0; // Keep blink horizontal
+        dir.Normalize();
+        
         Vector3 target = transform.position + dir * blinkDistance;
 
         bool success = false;
-        if (!Physics.Raycast(transform.position, dir, blinkDistance))
+        
+        // Check for obstacles using sphere cast for better collision detection
+        if (!Physics.SphereCast(transform.position + Vector3.up, 0.5f, dir, out RaycastHit hit, blinkDistance, blinkObstacleMask))
         {
             transform.position = target;
             success = true;
+            
+            // Add forward momentum after blink
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y, rb.linearVelocity.z);
+                rb.AddForce(dir * blinkVelocityBoost, ForceMode.VelocityChange);
+            }
+            
+            // FOV effect
+            StartCoroutine(BlinkFOVEffect());
+            
             Debug.Log("Blink successful.");
         }
         else
         {
-            Debug.Log("Blink blocked.");
+            Debug.Log($"Blink blocked by {hit.collider.name}");
         }
         
         // Log blink usage
@@ -294,6 +318,35 @@ public class PlayerAbilityController : MonoBehaviour
             actorState: "Mobile",
             wasSuccessful: success
         );
+    }
+    
+    private IEnumerator BlinkFOVEffect()
+    {
+        if (cam == null) yield break;
+        
+        float elapsed = 0f;
+        float halfDuration = blinkFOVDuration / 2f;
+        
+        // Zoom in
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / halfDuration;
+            cam.fieldOfView = Mathf.Lerp(_baseFOV, _baseFOV + blinkFOVBoost, t);
+            yield return null;
+        }
+        
+        // Zoom out
+        elapsed = 0f;
+        while (elapsed < halfDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / halfDuration;
+            cam.fieldOfView = Mathf.Lerp(_baseFOV + blinkFOVBoost, _baseFOV, t);
+            yield return null;
+        }
+        
+        cam.fieldOfView = _baseFOV; // Ensure it's back to base
     }
 
     private void StunNearbyEnemies()
