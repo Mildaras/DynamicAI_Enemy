@@ -38,7 +38,23 @@ public class TelekinesisController : MonoBehaviour
     private float _nextAllowedCast = 0f;
     private GameObject _indicatorInst;
 
-    
+    [Header("Right Click - Object Throw")]
+    [SerializeField] private GameObject throwIndicatorPrefab;
+    [SerializeField] private float pickupRange = 10f;
+    [SerializeField] private float leftClickMaxAimDistance = 8f;
+    [SerializeField] private float grabDistance = 1.5f;
+    [SerializeField] private float objectPullForce = 5f;
+    [SerializeField] private float launchForce = 50f;
+    [SerializeField] private float objectDamage = 75f;
+    [SerializeField] private float objectHoverHeight = 1.5f;
+    [SerializeField] private float knockbackForce = 15f;
+    [SerializeField] private LayerMask movableLayer;
+    [SerializeField] private GameObject shatterEffect;
+
+    private GameObject _throwIndicatorInst;
+    private Rigidbody _targetObjectRb;
+    private Renderer _targetObjectRenderer;
+    private bool _isObjectGrabbed;
 
     void Awake()
     {
@@ -163,6 +179,41 @@ public class TelekinesisController : MonoBehaviour
             originalStoppingDistances.Clear();
         }
 
+        // Right Click - Object Throw
+        if (Input.GetMouseButtonDown(1) && throwIndicatorPrefab != null)
+        {
+            _throwIndicatorInst = Instantiate(throwIndicatorPrefab);
+        }
+
+        if (Input.GetMouseButton(1) && _throwIndicatorInst != null)
+        {
+            UpdateLeftIndicatorPosition();
+            if (!_isObjectGrabbed)
+                PullNearestMovable();
+            else
+                HoldGrabbedObject();
+        }
+
+        if (Input.GetMouseButtonUp(1))
+        {
+            if (_isObjectGrabbed && _targetObjectRb != null)
+                LaunchObject();
+            else if (_targetObjectRb != null)
+            {
+                SetObjectGlow(_targetObjectRenderer, false);
+                IgnoreEnemyCollisions(_targetObjectRb.gameObject, false);
+            }
+
+            if (_throwIndicatorInst != null)
+            {
+                Destroy(_throwIndicatorInst);
+                _throwIndicatorInst = null;
+            }
+
+            _targetObjectRb = null;
+            _targetObjectRenderer = null;
+            _isObjectGrabbed = false;
+        }
     }
 
     private void UpdateIndicatorPosition()
@@ -178,6 +229,160 @@ public class TelekinesisController : MonoBehaviour
             Vector3 point = ray.origin + ray.direction * maxAimDistance;
             _indicatorInst.transform.position = point + Vector3.up * indicatorYOffset;
         }
+    }
+
+    private void UpdateLeftIndicatorPosition()
+    {
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        Vector3 point;
+
+        // Temporarily disable grabbed object's collider so raycast doesn't hit it
+        Collider grabbedCol = _isObjectGrabbed && _targetObjectRb != null
+            ? _targetObjectRb.GetComponent<Collider>() : null;
+        if (grabbedCol != null) grabbedCol.enabled = false;
+
+        if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance))
+            point = hit.point;
+        else
+            point = ray.origin + ray.direction * maxAimDistance;
+
+        if (grabbedCol != null) grabbedCol.enabled = true;
+
+        // Clamp distance from player so indicator stays closer than left-click one
+        Vector3 playerPos = transform.position;
+        Vector3 toPoint = point - playerPos;
+        if (toPoint.magnitude > leftClickMaxAimDistance)
+            point = playerPos + toPoint.normalized * leftClickMaxAimDistance;
+
+        _throwIndicatorInst.transform.position = point + Vector3.up * indicatorYOffset;
+    }
+
+    private void PullNearestMovable()
+    {
+        Collider[] colliders = Physics.OverlapSphere(_throwIndicatorInst.transform.position, pickupRange, movableLayer);
+        float closestDist = float.MaxValue;
+        Rigidbody closestRb = null;
+
+        foreach (var col in colliders)
+        {
+            Rigidbody rb = col.GetComponent<Rigidbody>();
+            if (rb == null) continue;
+
+            float dist = Vector3.Distance(col.transform.position, _throwIndicatorInst.transform.position);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                closestRb = rb;
+            }
+        }
+
+        if (closestRb == null)
+        {
+            if (_targetObjectRenderer != null)
+                SetObjectGlow(_targetObjectRenderer, false);
+            _targetObjectRb = null;
+            _targetObjectRenderer = null;
+            return;
+        }
+
+        // Switched to a different object - clear glow and re-enable collisions on the old one
+        if (_targetObjectRb != null && _targetObjectRb != closestRb)
+        {
+            SetObjectGlow(_targetObjectRenderer, false);
+            IgnoreEnemyCollisions(_targetObjectRb.gameObject, false);
+        }
+
+        // First time targeting this object - disable enemy collisions immediately
+        if (_targetObjectRb != closestRb)
+            IgnoreEnemyCollisions(closestRb.gameObject, true);
+
+        _targetObjectRb = closestRb;
+        _targetObjectRenderer = closestRb.GetComponent<Renderer>();
+
+        // Red glow while not yet grabbed
+        SetObjectGlow(_targetObjectRenderer, true);
+
+        // Pull toward indicator
+        Vector3 dir = (_throwIndicatorInst.transform.position - closestRb.transform.position).normalized;
+        closestRb.AddForce(dir * objectPullForce, ForceMode.Acceleration);
+
+        // Close enough to grab
+        if (closestDist <= grabDistance)
+        {
+            var existingProj = closestRb.GetComponent<TelekinesisProjectile>();
+            if (existingProj != null)
+                Destroy(existingProj);
+
+            SetObjectGlow(_targetObjectRenderer, false);
+
+            _targetObjectRb.useGravity = false;
+            _targetObjectRb.linearVelocity = Vector3.zero;
+            _targetObjectRb.angularVelocity = Vector3.zero;
+            _targetObjectRb.isKinematic = true;
+            _isObjectGrabbed = true;
+        }
+    }
+
+    private void HoldGrabbedObject()
+    {
+        if (_targetObjectRb == null)
+        {
+            _isObjectGrabbed = false;
+            return;
+        }
+
+        _targetObjectRb.transform.position = _throwIndicatorInst.transform.position;
+    }
+
+    private void LaunchObject()
+    {
+        // Re-enable enemy collisions for the throw
+        IgnoreEnemyCollisions(_targetObjectRb.gameObject, false);
+
+        _targetObjectRb.isKinematic = false;
+        _targetObjectRb.useGravity = true;
+
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        _targetObjectRb.AddForce(ray.direction * launchForce, ForceMode.Impulse);
+
+        var proj = _targetObjectRb.gameObject.AddComponent<TelekinesisProjectile>();
+        proj.Initialize(objectDamage, knockbackForce, shatterEffect);
+
+        ActionLogger.Instance?.LogAction(
+            actor:     "Player",
+            actionType:"Player_Telekinesis_Throw",
+            target:     _targetObjectRb.gameObject.name,
+            isHit:      false,
+            damage:     0f,
+            distance:   0f
+        );
+    }
+
+    private void IgnoreEnemyCollisions(GameObject obj, bool ignore)
+    {
+        Collider objCol = obj.GetComponent<Collider>();
+        if (objCol == null) return;
+
+        foreach (var enemyObj in GameObject.FindGameObjectsWithTag("Enemy"))
+        {
+            Collider enemyCol = enemyObj.GetComponent<Collider>();
+            if (enemyCol != null)
+                Physics.IgnoreCollision(objCol, enemyCol, ignore);
+        }
+    }
+
+    private void SetObjectGlow(Renderer renderer, bool enabled)
+    {
+        if (renderer == null) return;
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        if (enabled)
+        {
+            renderer.GetPropertyBlock(block);
+            block.SetColor("_EmissionColor", Color.red * 2f);
+            block.SetColor("_BaseColor", new Color(1f, 0.3f, 0.3f, 1f));
+            block.SetColor("_Color", new Color(1f, 0.3f, 0.3f, 1f));
+        }
+        renderer.SetPropertyBlock(block);
     }
 
     private void PullEnemiesTowardIndicator()

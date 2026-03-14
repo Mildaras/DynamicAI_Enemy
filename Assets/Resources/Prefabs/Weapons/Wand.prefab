@@ -157,6 +157,12 @@ MonoBehaviour:
   overloadTime: 3
   maxScale: 2
   explosionEffect: {fileID: 8464950693656172981, guid: ccaadd2beec68f24b8cd223240be1e9a, type: 3}
+  stopDistance: 2
+  explosionRadius: 5
+  explosionDamage: 100
+  damagePlayer: 1
+  cameraShakeDuration: 0.3
+  cameraShakeMagnitude: 0.2
   pullForce: 10
   maxRange: 5
   cooldown: 1.5
@@ -167,3 +173,16 @@ MonoBehaviour:
   indicatorYOffset: 0.05
   cam: {fileID: 0}
   maxAimDistance: 20
+  throwIndicatorPrefab: {fileID: 7762856170357784386, guid: 8beb479705c7f814f91acf023df70d13, type: 3}
+  pickupRange: 10
+  leftClickMaxAimDistance: 15
+  grabDistance: 1.5
+  objectPullForce: 0
+  launchForce: 50
+  objectDamage: 75
+  objectHoverHeight: 1.5
+  knockbackForce: 15
+  movableLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  shatterEffect: {fileID: 1905091741822524797, guid: 08b60e4188f8a924eb3510fe795b3b76, type: 3}
