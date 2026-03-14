@@ -163,7 +163,13 @@ public class CombatAnalytics : MonoBehaviour
         // 9) Apply to enemy controller
         weights.ApplyTo(mainEnemy);
         
-        // 10) Show detailed before/after comparison
+        // 10) Capture weights for visualization
+        if (StatsOverlay.Instance != null)
+        {
+            StatsOverlay.Instance.CaptureCurrentWeights();
+        }
+        
+        // 11) Show detailed before/after comparison
         AdaptiveLogger.Detailed($"AFTER adaptation:\n{FormatWeightsDetailed(weights)}");
         AdaptiveLogger.Critical(GenerateChangeReport(originalWeights, weights));
 
