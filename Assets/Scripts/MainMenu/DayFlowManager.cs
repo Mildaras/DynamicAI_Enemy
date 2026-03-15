@@ -134,6 +134,9 @@ public class DayFlowManager : MonoBehaviour
         _currentDay++;
         PlayerPrefs.SetInt("GameDay", _currentDay);
 
+        // auto-save progress after surviving a day
+        GameSaveManager.SaveGame();
+
         // 1) teleport player back to the hub spawn
         if (_player != null && hubSpawnPoint != null)
         {

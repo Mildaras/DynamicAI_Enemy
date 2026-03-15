@@ -175,9 +175,9 @@ MonoBehaviour:
   maxAimDistance: 20
   throwIndicatorPrefab: {fileID: 7762856170357784386, guid: 8beb479705c7f814f91acf023df70d13, type: 3}
   pickupRange: 10
-  leftClickMaxAimDistance: 15
+  leftClickMaxAimDistance: 5
   grabDistance: 1.5
-  objectPullForce: 0
+  objectPullForce: 10
   launchForce: 50
   objectDamage: 75
   objectHoverHeight: 1.5

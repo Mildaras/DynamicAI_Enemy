@@ -26,6 +26,41 @@ public class PlayerData : MonoBehaviour
     public static float playerShield = shield;
     public static float playerGold = gold;
 
+    /// <summary>
+    /// Reset all player state to starting defaults (for New Game).
+    /// </summary>
+    public static void ResetToDefaults()
+    {
+        health = 100f;
+        shield = 0f;
+        gold   = 0f;
+
+        playerHealth = health;
+        playerShield = shield;
+        playerGold   = gold;
+
+        hasExtraJump     = false;
+        hasInvunerability = false;
+        hasBlink         = false;
+        hasStunPulse     = false;
+        hasReflect       = false;
+        hasSmite         = false;
+    }
+
+    /// <summary>
+    /// Restore state from a save file (called by GameSaveManager).
+    /// </summary>
+    public static void RestoreState(float savedHealth, float savedShield, float savedGold)
+    {
+        health = savedHealth;
+        shield = savedShield;
+        gold   = savedGold;
+
+        playerHealth = health;
+        playerShield = shield;
+        playerGold   = gold;
+    }
+
     public TextMeshProUGUI healthText;
     public TextMeshProUGUI shieldText;
     public TextMeshProUGUI goldText;

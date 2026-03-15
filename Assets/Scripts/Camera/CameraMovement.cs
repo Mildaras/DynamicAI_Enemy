@@ -55,7 +55,7 @@ public class CameraMovement : MonoBehaviour
 
     void Update()
     {
-        if (!PlayerMovement.dialogueActive)
+        if (!PlayerMovement.dialogueActive && Time.timeScale > 0f)
         {
             float sensitivityMultiplier = isSwinging ? 0.3f : 1.0f; // Reduce camera sensitivity while swinging
 
